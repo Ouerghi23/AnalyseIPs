@@ -1,0 +1,217 @@
+{
+  "name": "Analyse IPs",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1320,
+        -100
+      ],
+      "id": "c41a3aac-34af-4e3d-ba70-9ec114f64c4f",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "=GET",
+        "url": "=https://otx.alienvault.com/api/v1/indicators/IPv4/{{ $json.ip }}/general",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-OTX-API-KEY",
+              "value": "02a6016da1b220f30a023d71b520cc8d297feacc0a9be5c5d8b4ee4f59c55b23"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -880,
+        -200
+      ],
+      "id": "4ed2e7a5-c6d2-4a79-8bca-241b13dfca54",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.virustotal.com/api/v3/ip_addresses/{{ $json.ip }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-apikey",
+              "value": "34690ce48a0d768d20cbaf954424dc059eb76a0aed320a00d30418d9726dc135"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -880,
+        0
+      ],
+      "id": "fade9bbd-6b87-4bee-8da6-39c56a751309",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -660,
+        -100
+      ],
+      "id": "887514e7-6ad3-42af-a2d7-77bfd5ce9da9",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "chatId": "6461505079",
+        "text": "={{ \n  $json.risk_color + \" Votre adresse IP \" + $json.ipaddress + \n  \" est considérée comme *\" + $json.risk_level + \"*.\\n\" + \n  \"Score de risque : \" + $json.risk_score + \"\\n\" +\n  \"Détails : \" + $json.summary \n}}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -220,
+        -100
+      ],
+      "id": "9be3aa82-8f19-4586-aadf-74ae81f63b26",
+      "name": "Telegram",
+      "webhookId": "14872a8f-d07b-4d05-b2e9-56dfcd6339aa",
+      "credentials": {
+        "telegramApi": {
+          "id": "J6e9rEEwuorC8d89",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"ip\": \"8.8.8.8\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1100,
+        -100
+      ],
+      "id": "734453b7-e9a2-4f82-8414-a65aabb49e71",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "// On suppose que le nœud qui contient l'IP s'appelle \"Set\"\nconst otx = items[0].json;\nconst vt = items[1].json;\n\nlet risk_score = 0;\nlet details = {\n  otx_pulses: otx.pulse_info?.count || 0,\n  vt_malicious: vt.data?.attributes?.last_analysis_stats?.malicious || 0\n};\n\n// Calcul du score\nrisk_score += details.otx_pulses * 20;\nrisk_score += details.vt_malicious * 10;\n\nlet risk_level = 'safe';\nlet risk_color = '🟢';\nlet alert_type = 'INFO';\n\nif (risk_score > 60) {\n  risk_level = 'malicious';\n  risk_color = '🔴';\n  alert_type = 'URGENT';\n} else if (risk_score > 20) {\n  risk_level = 'suspicious';\n  risk_color = '🟠';\n  alert_type = 'WARNING';\n}\n\n// 🛠️ Vérifie ici le nom de ton nœud Set (change si besoin)\nreturn [{\n  json: {\n    ipaddress: $('Edit Fields').first().json.ip,\n    risk_score,\n    risk_level,\n    risk_color,\n    alert_type,\n    summary: `Analyse : ${details.otx_pulses} pulses OTX, ${details.vt_malicious} détections VT`,\n    details\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -440,
+        -100
+      ],
+      "id": "aa82edf2-df48-46e1-a7b3-2457f75959bb",
+      "name": "Code"
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "json": {
+          "ip_address": "185.234.247.225"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f32ae6a1-293e-4424-9043-68699009e7a3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9a96e9af9005b70b31ef50f6b6975f839fc6e5a69944096e4fc8315a831cb61b"
+  },
+  "id": "uMEnpaRawfQkGhzQ",
+  "tags": []
+}
