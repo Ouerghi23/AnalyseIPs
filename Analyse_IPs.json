@@ -21,7 +21,7 @@
           "parameters": [
             {
               "name": "X-OTX-API-KEY",
-              "value": "02a6016da1b220f30a023d71b520cc8d297feacc0a9be5c5d8b4ee4f59c55b23"
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
             }
           ]
         },
@@ -44,7 +44,7 @@
           "parameters": [
             {
               "name": "x-apikey",
-              "value": "34690ce48a0d768d20cbaf954424dc059eb76a0aed320a00d30418d9726dc135"
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
             }
           ]
         },
